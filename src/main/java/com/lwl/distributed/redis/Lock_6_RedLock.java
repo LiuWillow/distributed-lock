@@ -15,9 +15,10 @@ import java.util.concurrent.TimeUnit;
  * @description
  * @date 2019/5/17 11:23
  */
-@Service
-public class Lock_6_RedLock {
-    public boolean lock(String key) {
+@Service("redLock")
+public class Lock_6_RedLock extends RedisLock{
+    @Override
+    public boolean lock(String key, String value) {
         Config config1 = new Config();
         config1.useSingleServer().setAddress("address1")
                 .setPassword("password").setDatabase(1);

@@ -13,8 +13,8 @@ import org.springframework.stereotype.Service;
  * @description
  * @date 2019/5/17 10:56
  */
-@Service
-public class Lock_4_SetNxPx_ReleaseId {
+@Service("redisNxPxTx")
+public class Lock_4_SetNxPx_TxId extends RedisLock{
     @Autowired
     public StringRedisTemplate redisTemplate;
 
@@ -23,6 +23,7 @@ public class Lock_4_SetNxPx_ReleaseId {
      * @param key
      * @return
      */
+    @Override
     public boolean lock(String key, String txId) {
         RedisConnection connection = redisTemplate.getConnectionFactory().getConnection();
         Boolean success = connection.set(key.getBytes(), txId.getBytes(), Expiration.milliseconds(5000),
@@ -35,6 +36,7 @@ public class Lock_4_SetNxPx_ReleaseId {
      * @param key
      * @return
      */
+    @Override
     public boolean unlock(String key, String txId) {
         String oldTxId = redisTemplate.opsForValue().get(key);
         if (!txId.equals(oldTxId)){
@@ -44,7 +46,4 @@ public class Lock_4_SetNxPx_ReleaseId {
         Boolean success = redisTemplate.delete(key);
         return success == null ? false : success;
     }
-
-
-
 }

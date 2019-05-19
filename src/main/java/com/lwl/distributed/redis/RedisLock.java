@@ -10,19 +10,15 @@ import org.springframework.stereotype.Service;
  * @date 2019/5/17 9:36
  */
 @Service
-public abstract class Lock {
+public abstract class RedisLock implements DistributedLock{
     @Autowired
     public RedisTemplate redisTemplate;
 
     /**
      * 解锁
      */
-    public boolean unlock(String key){
-        return redisTemplate.delete(key);
+    @Override
+    public boolean unlock(String key, String value){
+       return redisTemplate.delete(key);
     }
-
-    /**
-     * 获取分布式锁抽象方法
-     */
-    public abstract boolean lock(String key);
 }
