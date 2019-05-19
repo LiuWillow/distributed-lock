@@ -2,6 +2,7 @@ package com.lwl.distributed.redis;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 /**
@@ -12,7 +13,7 @@ import org.springframework.stereotype.Service;
 @Service
 public abstract class RedisLock implements DistributedLock{
     @Autowired
-    public RedisTemplate redisTemplate;
+    public StringRedisTemplate redisTemplate;
 
     /**
      * 解锁

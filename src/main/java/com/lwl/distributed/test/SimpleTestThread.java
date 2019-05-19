@@ -8,13 +8,13 @@ import org.springframework.util.StringUtils;
  * date  2019/5/19
  * author liuwillow
  **/
-public class TestThread extends Thread {
+public class SimpleTestThread extends Thread {
     private DistributedLock lock;
     private String key;
     private String value;
 
-    public TestThread(String threadName, DistributedLock lock,
-                      String key, String value) {
+    public SimpleTestThread(String threadName, DistributedLock lock,
+                            String key, String value) {
         this.lock = lock;
         this.key = key;
         this.value = value;

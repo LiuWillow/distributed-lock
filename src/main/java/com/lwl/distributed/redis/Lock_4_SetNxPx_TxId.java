@@ -26,15 +26,15 @@ public class Lock_4_SetNxPx_TxId extends RedisLock{
     @Override
     public boolean lock(String key, String txId) {
         RedisConnection connection = redisTemplate.getConnectionFactory().getConnection();
-        Boolean success = connection.set(key.getBytes(), txId.getBytes(), Expiration.milliseconds(5000),
+        Boolean success = connection.set(key.getBytes(), txId.getBytes(),
+                Expiration.milliseconds(EXPIRE),
                 RedisStringCommands.SetOption.ifAbsent());
         return success == null ? false : success;
     }
 
     /**
      * 调用set  传入nx和px参数，值为可以唯一标识当前线程的值（稍微安全）
-     * @param key
-     * @return
+     *
      */
     @Override
     public boolean unlock(String key, String txId) {

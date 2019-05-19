@@ -2,6 +2,8 @@ package com.lwl.distributed.redis;
 
 import org.springframework.stereotype.Service;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * @author liuweilong
  * @description
@@ -13,7 +15,7 @@ public class Lock_1_DirectLock extends RedisLock {
      * 直接调用setnx
      */
     @Override
-    public boolean lock(String key, String value){
+    public boolean lock(String key, String value) {
         return redisTemplate.opsForValue().setIfAbsent(key, value);
     }
 }

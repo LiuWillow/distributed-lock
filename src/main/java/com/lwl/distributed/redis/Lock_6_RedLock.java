@@ -5,7 +5,6 @@ import org.redisson.RedissonRedLock;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.TimeUnit;
@@ -40,7 +39,7 @@ public class Lock_6_RedLock extends RedisLock{
 
         RedissonRedLock redLock = new RedissonRedLock(lock1, lock2, lock3);
         try {
-            return redLock.tryLock(3, 5, TimeUnit.SECONDS);
+            return redLock.tryLock(WAIT_TIME, EXPIRE, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

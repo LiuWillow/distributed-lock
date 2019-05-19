@@ -17,7 +17,7 @@ public class Lock_2_DirectLockPx extends RedisLock {
     @Override
     public boolean lock(String key, String value){
         Boolean nxSuccess = redisTemplate.opsForValue().setIfAbsent(key, value);
-        Boolean expireSuccess = redisTemplate.expire(key, 10, TimeUnit.SECONDS);
+        Boolean expireSuccess = redisTemplate.expire(key, EXPIRE, TimeUnit.MILLISECONDS);
         return nxSuccess && expireSuccess;
     }
 }
