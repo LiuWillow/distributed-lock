@@ -5,7 +5,6 @@ import org.redisson.RedissonRedLock;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.TimeUnit;
@@ -15,9 +14,10 @@ import java.util.concurrent.TimeUnit;
  * @description
  * @date 2019/5/17 11:23
  */
-@Service
-public class Lock_6_RedLock {
-    public boolean lock(String key) {
+@Service("redLock")
+public class Lock_6_RedLock extends RedisLock{
+    @Override
+    public boolean lock(String key, String value) {
         Config config1 = new Config();
         config1.useSingleServer().setAddress("address1")
                 .setPassword("password").setDatabase(1);
@@ -39,7 +39,7 @@ public class Lock_6_RedLock {
 
         RedissonRedLock redLock = new RedissonRedLock(lock1, lock2, lock3);
         try {
-            return redLock.tryLock(3, 5, TimeUnit.SECONDS);
+            return redLock.tryLock(WAIT_TIME, EXPIRE, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

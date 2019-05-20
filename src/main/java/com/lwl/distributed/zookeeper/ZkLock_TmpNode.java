@@ -10,7 +10,7 @@ import org.apache.zookeeper.CreateMode;
  * @description
  * @date 2019/5/17 11:44
  */
-public class ZkLock {
+public class ZkLock_TmpNode {
     public boolean lock(String key){
         CuratorFramework client = CuratorFrameworkFactory.newClient("119.3.210.17:2181",
                 new RetryNTimes(3, 1000));
@@ -26,7 +26,7 @@ public class ZkLock {
     }
 
     public static void main(String[] args) {
-        boolean asdf = new ZkLock().lock("asdf");
-        boolean aasd = new ZkLock().lock("asdf");
+        boolean asdf = new ZkLock_TmpNode().lock("asdf");
+        boolean aasd = new ZkLock_TmpNode().lock("asdf");
     }
 }
