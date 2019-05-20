@@ -9,9 +9,6 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * date  2019/5/19
@@ -19,7 +16,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * 具体的逻辑实现，jdk并发工具
  **/
 public class LockServerHandler extends ChannelInboundHandlerAdapter {
-    private static final Map<String, Boolean> lockMap = new ConcurrentHashMap<>();
+    private static final Map<String, Boolean> LOCK_MAP = new ConcurrentHashMap<>();
     private static final String LOCK = "1";
     private static final String UN_LOCK = "0";
     private static final String SUCCESS = "1";
@@ -53,7 +50,7 @@ public class LockServerHandler extends ChannelInboundHandlerAdapter {
 
     private void unlock(Channel channel, Msg msg) {
         String key = msg.getKey();
-        lockMap.put(key, false);
+        LOCK_MAP.put(key, false);
         msg.setSuccess(SUCCESS);
         channel.writeAndFlush(SUCCESS);
     }
@@ -73,10 +70,10 @@ public class LockServerHandler extends ChannelInboundHandlerAdapter {
     }
 
     private boolean tryLock(String key) {
-        synchronized (lockMap) {
-            Boolean isLock = lockMap.get(key);
+        synchronized (LOCK_MAP) {
+            Boolean isLock = LOCK_MAP.get(key);
             if (isLock == null || !isLock) {
-                lockMap.put(key, true);
+                LOCK_MAP.put(key, true);
                 return true;
             }
         }

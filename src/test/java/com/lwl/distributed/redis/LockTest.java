@@ -50,7 +50,7 @@ public class LockTest {
 
     @Test
     public void testTx() throws InterruptedException {
-        IDistributedLock lock = factory.get(LockType.REDIS_NX_PX_TX);
+        IDistributedLock lock = factory.get(LockType.REDIS_NX_PX_TX_LUA);
         for (int i = 0; i < 3; i++) {
             Runnable task = generateTask(lock);
             new Thread(task).start();
