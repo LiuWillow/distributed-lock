@@ -10,7 +10,7 @@ public class Msg {
      */
     private String requestId;
     /**
-     * 请求类型，1加锁，2解锁
+     * 请求类型，1加锁，0解锁
      */
     private String type;
     /**

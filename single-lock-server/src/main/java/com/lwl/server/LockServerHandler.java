@@ -52,7 +52,7 @@ public class LockServerHandler extends ChannelInboundHandlerAdapter {
         String key = msg.getKey();
         LOCK_MAP.put(key, false);
         msg.setSuccess(SUCCESS);
-        channel.writeAndFlush(SUCCESS);
+        channel.writeAndFlush(Unpooled.copiedBuffer((JSON.toJSONString(msg) + "$").getBytes()));
     }
 
     private boolean lock(Channel channel, Msg msg) throws InterruptedException {
