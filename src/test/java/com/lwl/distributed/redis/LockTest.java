@@ -1,6 +1,7 @@
 package com.lwl.distributed.redis;
 
 
+import com.lwl.distributed.IDistributedLock;
 import com.lwl.distributed.LockApp;
 import com.lwl.distributed.factory.LockType;
 import com.lwl.distributed.test.SimpleTestThread;
@@ -22,10 +23,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @SpringBootTest(classes = LockApp.class)
 public class LockTest {
     @Autowired
-    private Map<String, DistributedLock> factory;
+    private Map<String, IDistributedLock> factory;
 
     private static final long RETRY_TIME_OUT = 2000;
-    private static final long TASK_TIME = DistributedLock.EXPIRE - 1000;
+    private static final long TASK_TIME = IDistributedLock.EXPIRE - 1000;
     private static final long GC_TIME = 3000;
     private static final int RETRY_TIMES = 5;
     private AtomicBoolean hasGc = new AtomicBoolean(false);
@@ -35,7 +36,7 @@ public class LockTest {
 
     @Test
     public void testLock() throws InterruptedException {
-        DistributedLock lock = factory.get(LockType.JDK_LOCK);
+        IDistributedLock lock = factory.get(LockType.ZK_TMP);
         for (int i = 0; i < 10; i++) {
             String threadName = i + "";
             new SimpleTestThread(threadName, lock, GOODS_ID, "").start();
@@ -45,7 +46,7 @@ public class LockTest {
 
     @Test
     public void testTx() throws InterruptedException {
-        DistributedLock lock = factory.get(LockType.REDIS_NX_PX_TX);
+        IDistributedLock lock = factory.get(LockType.REDIS_NX_PX_TX);
         for (int i = 0; i < 3; i++) {
             Runnable task = generateTask(lock);
             new Thread(task).start();
@@ -53,7 +54,7 @@ public class LockTest {
         Thread.sleep(30000);
     }
 
-    private Runnable generateTask(DistributedLock lock) {
+    private Runnable generateTask(IDistributedLock lock) {
         return () -> {
             String txId = Thread.currentThread().getName();
             boolean success = lock.lock(GOODS_ID, txId);
@@ -90,7 +91,7 @@ public class LockTest {
         }
     }
 
-    private boolean retry(DistributedLock lock, String txId, int i) {
+    private boolean retry(IDistributedLock lock, String txId, int i) {
         System.out.println("线程：" + Thread.currentThread().getName() + "正在尝试第" +
                 i + "次重新获取锁");
         sleepSeconds(RETRY_TIME_OUT);

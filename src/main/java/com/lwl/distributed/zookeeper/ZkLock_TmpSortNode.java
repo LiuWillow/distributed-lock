@@ -14,17 +14,16 @@ import org.springframework.stereotype.Service;
  * @date 2019/5/17 11:44
  */
 @Service("zkTmp")
-public class ZkLock_TmpNode implements IDistributedLock {
+public class ZkLock_TmpSortNode implements IDistributedLock {
     @Value("${zk.client}")
     private String connectionString;
-
     @Override
     public boolean lock(String key, String value) {
         CuratorFramework client = CuratorFrameworkFactory.newClient(connectionString,
                 new RetryNTimes(3, 1000));
         client.start();
         try {
-            client.create().withMode(CreateMode.EPHEMERAL)
+            client.create().withMode(CreateMode.EPHEMERAL_SEQUENTIAL)
                     .forPath("/" + key, value.getBytes());
             return true;
         } catch (Exception e) {

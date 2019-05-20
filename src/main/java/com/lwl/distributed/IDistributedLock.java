@@ -1,10 +1,10 @@
-package com.lwl.distributed.redis;
+package com.lwl.distributed;
 
 /**
  * date  2019/5/19
  * author liuwillow
  **/
-public interface DistributedLock {
+public interface IDistributedLock {
     long EXPIRE = 3000;
     long WAIT_TIME = 2000;
     boolean lock(String key, String value);

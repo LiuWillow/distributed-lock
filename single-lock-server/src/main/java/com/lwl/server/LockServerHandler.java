@@ -16,6 +16,7 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * date  2019/5/19
  * author liuwillow
+ * 具体的逻辑实现，jdk并发工具
  **/
 public class LockServerHandler extends ChannelInboundHandlerAdapter {
     private static final Map<String, Boolean> lockMap = new ConcurrentHashMap<>();
@@ -30,10 +31,10 @@ public class LockServerHandler extends ChannelInboundHandlerAdapter {
             return;
         }
         String objStr = (String) object;
-        System.out.println("服务端收到消息： " + objStr);
         Msg msg = JSONObject.parseObject(objStr, Msg.class);
         Channel channel = ctx.channel();
 
+        //加锁对应的逻辑
         if (LOCK.equals(msg.getType())) {
             System.out.println(msg.getRequestId() + "发起加锁请求");
             boolean success = lock(channel, msg);
@@ -42,11 +43,12 @@ public class LockServerHandler extends ChannelInboundHandlerAdapter {
             } else {
                 System.out.println(msg.getRequestId() + "请求锁失败");
             }
-        } else {
-            System.out.println(msg.getRequestId() + "发起解锁请求");
-            unlock(channel, msg);
-            System.out.println(msg.getRequestId() + "解锁锁成功");
+            return;
         }
+        //解锁对应的逻辑
+        System.out.println(msg.getRequestId() + "发起解锁请求");
+        unlock(channel, msg);
+        System.out.println(msg.getRequestId() + "解锁锁成功");
     }
 
     private void unlock(Channel channel, Msg msg) {
@@ -59,7 +61,7 @@ public class LockServerHandler extends ChannelInboundHandlerAdapter {
     private boolean lock(Channel channel, Msg msg) throws InterruptedException {
         String key = msg.getKey();
         boolean success = tryLock(key);
-        if (success){
+        if (success) {
             msg.setSuccess(SUCCESS);
             channel.writeAndFlush(Unpooled.copiedBuffer((JSON.toJSONString(msg) + "$").getBytes()));
             return success;
@@ -71,9 +73,9 @@ public class LockServerHandler extends ChannelInboundHandlerAdapter {
     }
 
     private boolean tryLock(String key) {
-        synchronized (lockMap){
+        synchronized (lockMap) {
             Boolean isLock = lockMap.get(key);
-            if (isLock == null || !isLock){
+            if (isLock == null || !isLock) {
                 lockMap.put(key, true);
                 return true;
             }

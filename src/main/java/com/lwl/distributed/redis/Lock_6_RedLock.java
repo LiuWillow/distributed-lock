@@ -15,9 +15,12 @@ import java.util.concurrent.TimeUnit;
  * @date 2019/5/17 11:23
  */
 @Service("redLock")
-public class Lock_6_RedLock extends RedisLock{
+public class Lock_6_RedLock extends BaseRedisLock {
     @Override
     public boolean lock(String key, String value) {
+        /**
+         * 获取三个独立节点的rlock
+         */
         Config config1 = new Config();
         config1.useSingleServer().setAddress("address1")
                 .setPassword("password").setDatabase(1);
@@ -37,6 +40,9 @@ public class Lock_6_RedLock extends RedisLock{
         RLock lock2 = client2.getLock(key);
         RLock lock3 = client3.getLock(key);
 
+        /**
+         * 获取所
+         */
         RedissonRedLock redLock = new RedissonRedLock(lock1, lock2, lock3);
         try {
             return redLock.tryLock(WAIT_TIME, EXPIRE, TimeUnit.MILLISECONDS);

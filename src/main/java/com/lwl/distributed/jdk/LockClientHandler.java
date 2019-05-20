@@ -50,11 +50,14 @@ public class LockClientHandler extends ChannelInboundHandlerAdapter {
     }
 
     public String send(Msg msg) {
+        //保存请求id对应的lock和condition
         Lock lock = new ReentrantLock();
         String requestId = msg.getRequestId();
         lockMap.put(requestId, lock);
         Condition condition = lock.newCondition();
         conditionMap.put(requestId, condition);
+
+        //发消息
         Channel channel = context.channel();
         channel.writeAndFlush(Unpooled.copiedBuffer((JSON.toJSONString(msg) + "$").getBytes()));
         try {

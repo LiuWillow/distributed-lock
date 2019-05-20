@@ -15,6 +15,7 @@ import io.netty.handler.codec.string.StringEncoder;
 /**
  * date  2019/5/19
  * author liuwillow
+ * 基于netty实现的分布式锁服务端
  **/
 public class DistributedLockServer {
     private static int PORT = 9821;
@@ -30,6 +31,7 @@ public class DistributedLockServer {
                         @Override
                         protected void initChannel(SocketChannel socketChannel) throws Exception {
                             ChannelPipeline pipeline = socketChannel.pipeline();
+                            //$符号分割消息，解决粘包问题
                             ByteBuf byteBuf = Unpooled.copiedBuffer("$".getBytes());
                             pipeline.addLast(new DelimiterBasedFrameDecoder(1024, byteBuf));
 

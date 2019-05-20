@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit;
  * @date 2019/5/17 9:26
  */
 @Service("redisDirectPx")
-public class Lock_2_DirectLockPx extends RedisLock {
+public class Lock_2_DirectLockPx extends BaseRedisLock {
     /**
      * 先调用setnx   再调用expire
      */

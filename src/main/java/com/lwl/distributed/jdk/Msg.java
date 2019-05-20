@@ -7,11 +7,22 @@ import lombok.Data;
  * author liuwillow
  **/
 public class Msg {
+    /**
+     * 请求的唯一标志，测试时用线程名称
+     */
     private String requestId;
+    /**
+     * 请求类型，1加锁，2解锁
+     */
     private String type;
-    private String success;
+    /**
+     * 对哪个资源加锁
+     */
     private String key;
-
+    /**
+     * 操作是否成功，用于服务端响应
+     */
+    private String success;
     public String getKey() {
         return key;
     }

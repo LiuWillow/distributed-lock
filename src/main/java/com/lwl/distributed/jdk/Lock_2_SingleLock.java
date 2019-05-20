@@ -1,7 +1,7 @@
 package com.lwl.distributed.jdk;
 
 
-import com.lwl.distributed.redis.DistributedLock;
+import com.lwl.distributed.IDistributedLock;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -16,18 +16,15 @@ import io.netty.handler.codec.string.StringEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @author liuweilong
  * @description
  * @date 2019/5/17 13:51
+ * 基于netty实现的分布式锁客户端
  */
 @Service("jdkLock")
-public class Lock_2_SingleLockClient implements DistributedLock {
+public class Lock_2_SingleLock implements IDistributedLock {
     private static final String LOCK = "1";
     private static final String UN_LOCK = "0";
     private static final String SUCCESS = "1";
@@ -39,8 +36,10 @@ public class Lock_2_SingleLockClient implements DistributedLock {
 
     @PostConstruct
     public void init(){
+        //注入发送器
         this.sender = new LockClientHandler();
 
+        //初始化客户端并建立连接
         Bootstrap client = new Bootstrap();
         NioEventLoopGroup worker = new NioEventLoopGroup();
         client.group(worker)
@@ -49,6 +48,7 @@ public class Lock_2_SingleLockClient implements DistributedLock {
                     @Override
                     protected void initChannel(SocketChannel socketChannel) throws Exception {
                         ChannelPipeline pipeline = socketChannel.pipeline();
+                        //$作为分隔符，解决粘包问题
                         ByteBuf byteBuf = Unpooled.copiedBuffer("$".getBytes());
                         pipeline.addLast(new DelimiterBasedFrameDecoder(1024, byteBuf));
                         pipeline.addLast("encoder", new StringEncoder());
@@ -71,6 +71,8 @@ public class Lock_2_SingleLockClient implements DistributedLock {
         msg.setRequestId(Thread.currentThread().getName());
         msg.setType(LOCK);
         msg.setKey(key);
+
+        //发送上锁的消息给服务端
         String result = sender.send(msg);
         return SUCCESS.equals(result);
     }

@@ -3,7 +3,6 @@ package com.lwl.distributed.redis;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisStringCommands;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.types.Expiration;
 import org.springframework.stereotype.Service;
@@ -14,7 +13,7 @@ import org.springframework.stereotype.Service;
  * @date 2019/5/17 10:56
  */
 @Service("redisNxPxTx")
-public class Lock_4_SetNxPx_TxId extends RedisLock{
+public class Lock_4_SetNxPx_TxId extends BaseRedisLock {
     @Autowired
     public StringRedisTemplate redisTemplate;
 

@@ -1,7 +1,6 @@
 package com.lwl.distributed.test;
 
-import com.lwl.distributed.redis.DistributedLock;
-import io.netty.util.internal.StringUtil;
+import com.lwl.distributed.IDistributedLock;
 import org.springframework.util.StringUtils;
 
 /**
@@ -9,11 +8,11 @@ import org.springframework.util.StringUtils;
  * author liuwillow
  **/
 public class SimpleTestThread extends Thread {
-    private DistributedLock lock;
+    private IDistributedLock lock;
     private String key;
     private String value;
 
-    public SimpleTestThread(String threadName, DistributedLock lock,
+    public SimpleTestThread(String threadName, IDistributedLock lock,
                             String key, String value) {
         this.lock = lock;
         this.key = key;

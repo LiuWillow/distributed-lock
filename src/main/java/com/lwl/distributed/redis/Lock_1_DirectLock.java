@@ -2,15 +2,13 @@ package com.lwl.distributed.redis;
 
 import org.springframework.stereotype.Service;
 
-import java.util.concurrent.TimeUnit;
-
 /**
  * @author liuweilong
  * @description
  * @date 2019/5/17 8:54
  */
 @Service("redisDirect")
-public class Lock_1_DirectLock extends RedisLock {
+public class Lock_1_DirectLock extends BaseRedisLock {
     /**
      * 直接调用setnx
      */

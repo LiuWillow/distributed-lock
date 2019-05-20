@@ -3,15 +3,12 @@ package com.lwl.distributed.redis;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisStringCommands;
-import org.springframework.data.redis.connection.ReturnType;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.data.redis.core.types.Expiration;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
 import java.util.Collections;
-import java.util.List;
 
 /**
  * @author liuweilong
@@ -19,7 +16,7 @@ import java.util.List;
  * @date 2019/5/17 10:56
  */
 @Service("redisNxPxTxLua")
-public class Lock_5_SetNxPx_TxId_Lua extends RedisLock{
+public class Lock_5_SetNxPx_TxId_Lua extends BaseRedisLock {
     @Autowired
     public StringRedisTemplate redisTemplate;
 

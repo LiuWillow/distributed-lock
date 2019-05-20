@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
  * @date 2019/5/17 10:56
  */
 @Service("redisNxPx")
-public class Lock_3_SetNxPx extends RedisLock {
+public class Lock_3_SetNxPx extends BaseRedisLock {
 
     /**
      * 调用set  传入nx参数
