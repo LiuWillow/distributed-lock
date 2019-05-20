@@ -17,7 +17,7 @@ public class SimpleTestThread extends Thread {
         this.lock = lock;
         this.key = key;
         this.value = value;
-        if (StringUtils.isEmpty(threadName)){
+        if (StringUtils.isEmpty(threadName)) {
             return;
         }
         this.setName(threadName);
@@ -29,6 +29,14 @@ public class SimpleTestThread extends Thread {
         boolean lock = this.lock.lock(key, value);
         if (lock) {
             System.out.println("线程：" + this.getName() + "获取锁成功");
+            System.out.println("线程：" + this.getName() + "开始执行任务");
+            try {
+                Thread.sleep(500);
+                this.lock.unlock(key, value);
+                System.out.println("线程：" + this.getName() + "释放锁");
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         } else {
             System.out.println("线程：" + this.getName() + "获取锁失败");
         }

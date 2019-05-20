@@ -5,6 +5,7 @@ import com.lwl.distributed.IDistributedLock;
 import com.lwl.distributed.LockApp;
 import com.lwl.distributed.factory.LockType;
 import com.lwl.distributed.test.SimpleTestThread;
+import com.lwl.distributed.zookeeper.ZkLock_TmpSortNode;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +26,9 @@ public class LockTest {
     @Autowired
     private Map<String, IDistributedLock> factory;
 
+    @Autowired
+    private ZkLock_TmpSortNode zkTmpSortLock;
+
     private static final long RETRY_TIME_OUT = 2000;
     private static final long TASK_TIME = IDistributedLock.EXPIRE - 1000;
     private static final long GC_TIME = 3000;
@@ -36,7 +40,7 @@ public class LockTest {
 
     @Test
     public void testLock() throws InterruptedException {
-        IDistributedLock lock = factory.get(LockType.ZK_TMP);
+        IDistributedLock lock = factory.get(LockType.ZK_TMP_SORT);
         for (int i = 0; i < 10; i++) {
             String threadName = i + "";
             new SimpleTestThread(threadName, lock, GOODS_ID, "").start();
@@ -52,6 +56,29 @@ public class LockTest {
             new Thread(task).start();
         }
         Thread.sleep(30000);
+    }
+
+    @Test
+    public void testZk() throws InterruptedException {
+        for (int i = 0; i < 5; i++) {
+            new Thread(() -> {
+                String nodeName = zkTmpSortLock.lock(GOODS_ID, "value");
+                if (nodeName == null){
+                    System.out.println("线程" + Thread.currentThread().getName() + "获取分布式锁失败");
+                }else {
+                    System.out.println("线程" + Thread.currentThread().getName() + "获取分布式锁成功，开始执行任务");
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    zkTmpSortLock.unlock(nodeName);
+                    System.out.println("线程" + Thread.currentThread().getName() + "任务执行完毕，成功释放锁");
+                }
+            }).start();
+        }
+
+        Thread.sleep(40000);
     }
 
     private Runnable generateTask(IDistributedLock lock) {

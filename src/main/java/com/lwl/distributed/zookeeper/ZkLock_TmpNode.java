@@ -1,12 +1,12 @@
 package com.lwl.distributed.zookeeper;
 
 import com.lwl.distributed.IDistributedLock;
-import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.CuratorFrameworkFactory;
-import org.apache.curator.retry.RetryNTimes;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.ZooDefs;
+import org.apache.zookeeper.ZooKeeper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
 
 /**
  * @author liuweilong
@@ -20,32 +20,26 @@ public class ZkLock_TmpNode implements IDistributedLock {
 
     @Override
     public boolean lock(String key, String value) {
-        CuratorFramework client = CuratorFrameworkFactory.newClient(connectionString,
-                new RetryNTimes(3, 1000));
-        client.start();
+        ZooKeeper client;
         try {
-            client.create().withMode(CreateMode.EPHEMERAL)
-                    .forPath("/" + key, value.getBytes());
+            client = new ZooKeeper(connectionString, 3000, null);
+            client.create(key, value.getBytes(), ZooDefs.Ids.OPEN_ACL_UNSAFE,
+                    CreateMode.EPHEMERAL);
             return true;
-        } catch (Exception e) {
+        } catch (Exception e){
             return false;
-        }finally {
-            client.close();
         }
     }
 
     @Override
     public boolean unlock(String key, String value) {
-        CuratorFramework client = CuratorFrameworkFactory.newClient(connectionString,
-                new RetryNTimes(3, 1000));
-        client.start();
+        ZooKeeper client;
         try {
-            client.delete().forPath("/" + key);
+            client = new ZooKeeper(connectionString, 3000, null);
+            client.delete(key, 0);
             return true;
         } catch (Exception e) {
             return false;
-        }finally {
-            client.close();
         }
     }
 }

@@ -14,4 +14,5 @@ public class LockType {
     public static final String REDIS_NX_PX_TX_LUA = "redisNxPxTxLua";
     public static final String RED_LOCK = "redLock";
     public static final String ZK_TMP = "zkTmp";
+    public static final String ZK_TMP_SORT = "zkTmpSort";
 }
