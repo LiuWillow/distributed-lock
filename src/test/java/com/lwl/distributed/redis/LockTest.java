@@ -40,7 +40,7 @@ public class LockTest {
 
     @Test
     public void testLock() throws InterruptedException {
-        IDistributedLock lock = factory.get(LockType.ZK_TMP_SORT);
+        IDistributedLock lock = factory.get(LockType.REDIS_NX_PX_TX_LUA);
         for (int i = 0; i < 10; i++) {
             String threadName = i + "";
             new SimpleTestThread(threadName, lock, GOODS_ID, "").start();
