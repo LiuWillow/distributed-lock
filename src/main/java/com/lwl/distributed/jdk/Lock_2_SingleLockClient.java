@@ -3,11 +3,14 @@ package com.lwl.distributed.jdk;
 
 import com.lwl.distributed.redis.DistributedLock;
 import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.DelimiterBasedFrameDecoder;
 import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.codec.string.StringEncoder;
 import org.springframework.stereotype.Service;
@@ -46,9 +49,11 @@ public class Lock_2_SingleLockClient implements DistributedLock {
                     @Override
                     protected void initChannel(SocketChannel socketChannel) throws Exception {
                         ChannelPipeline pipeline = socketChannel.pipeline();
-                        pipeline.addLast("decoder", new StringDecoder());
+                        ByteBuf byteBuf = Unpooled.copiedBuffer("$".getBytes());
+                        pipeline.addLast(new DelimiterBasedFrameDecoder(1024, byteBuf));
                         pipeline.addLast("encoder", new StringEncoder());
-                        pipeline.addLast("handler", new LockClientHandler());
+                        pipeline.addLast("decoder", new StringDecoder());
+                        pipeline.addLast("handler", sender);
                     }
                 });
 
@@ -63,8 +68,9 @@ public class Lock_2_SingleLockClient implements DistributedLock {
     @Override
     public boolean lock(String key, String value) {
         Msg msg = new Msg();
-        msg.setRequestId(key);
+        msg.setRequestId(Thread.currentThread().getName());
         msg.setType(LOCK);
+        msg.setKey(key);
         String result = sender.send(msg);
         return SUCCESS.equals(result);
     }
@@ -72,8 +78,9 @@ public class Lock_2_SingleLockClient implements DistributedLock {
     @Override
     public boolean unlock(String key, String value) {
         Msg msg = new Msg();
-        msg.setRequestId(key);
+        msg.setRequestId(Thread.currentThread().getName());
         msg.setType(UN_LOCK);
+        msg.setKey(key);
         String result = sender.send(msg);
         return SUCCESS.equals(result);
     }

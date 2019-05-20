@@ -1,9 +1,15 @@
 package com.lwl.server;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -12,55 +18,87 @@ import java.util.concurrent.locks.ReentrantLock;
  * author liuwillow
  **/
 public class LockServerHandler extends ChannelInboundHandlerAdapter {
-    private static Lock lock = new ReentrantLock();
-    private static final int RETRY_TIMES = 4;
-    private static final long RETRY_TIME_OUT = 2000;
+    private static final Map<String, Boolean> lockMap = new ConcurrentHashMap<>();
+    private static final int RETRY_TIMES = 3;
+    private static final long RETRY_TIME_OUT = 500;
     private static final String LOCK = "1";
     private static final String UN_LOCK = "0";
     private static final String SUCCESS = "1";
     private static final String FAILED = "0";
 
-
-
     @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        if (msg == null){
+    public void channelRead(ChannelHandlerContext ctx, Object object) throws Exception {
+        if (object == null) {
             return;
         }
+        String objStr = (String) object;
+        System.out.println("服务端收到消息： " + objStr);
+        Msg msg = JSONObject.parseObject(objStr, Msg.class);
         Channel channel = ctx.channel();
-        if (LOCK.equals(msg)) {
-            lock(channel);
+
+        if (LOCK.equals(msg.getType())) {
+            System.out.println(msg.getRequestId() + "发起加锁请求");
+            boolean success = lock(channel, msg);
+            if (success) {
+                System.out.println(msg.getRequestId() + "请求锁成功");
+            } else {
+                System.out.println(msg.getRequestId() + "请求锁失败");
+            }
         } else {
-            unlock(channel);
+            System.out.println(msg.getRequestId() + "发起解锁请求");
+            unlock(channel, msg);
+            System.out.println(msg.getRequestId() + "解锁锁成功");
         }
     }
 
-    private void unlock(Channel channel) {
-        lock.unlock();
+    private void unlock(Channel channel, Msg msg) {
+        String key = msg.getKey();
+        lockMap.put(key, false);
+        msg.setSuccess(SUCCESS);
         channel.writeAndFlush(SUCCESS);
     }
 
-    private void lock(Channel channel) throws InterruptedException {
-        boolean success = false;
-        if (lock.tryLock()) {
-            lock.lock();
-            success = true;
+    private boolean lock(Channel channel, Msg msg) throws InterruptedException {
+        String key = msg.getKey();
+        boolean success = tryLock(key);
+        if (success){
+            msg.setSuccess(SUCCESS);
+            channel.writeAndFlush(Unpooled.copiedBuffer((JSON.toJSONString(msg) + "$").getBytes()));
+            return success;
         }
+
+//        for (int i = 0; i < RETRY_TIMES && !success; i++) {
+//            Thread.sleep(RETRY_TIME_OUT);
+//            success = tryLock(key);
+//        }
+
         if (success) {
-            channel.writeAndFlush(SUCCESS);
-            return;
+            msg.setSuccess(SUCCESS);
+            channel.writeAndFlush(Unpooled.copiedBuffer((JSON.toJSONString(msg) + "$").getBytes()));
+            return success;
         }
-        for (int i = 0; i < RETRY_TIMES && !success; i++) {
-            Thread.sleep(RETRY_TIME_OUT);
-            if (lock.tryLock()) {
-                lock.lock();
-                success = true;
+
+        msg.setSuccess(FAILED);
+        channel.writeAndFlush(Unpooled.copiedBuffer((JSON.toJSONString(msg) + "$").getBytes()));
+        return false;
+    }
+
+    private boolean tryLock(String key) {
+        synchronized (lockMap){
+            Boolean isLock = lockMap.get(key);
+            if (isLock == null || !isLock){
+                lockMap.put(key, true);
+                return true;
             }
         }
-        if (success) {
-            channel.writeAndFlush(SUCCESS);
-            return;
-        }
-        channel.writeAndFlush(FAILED);
+        return false;
+    }
+
+    public static void main(String[] args) {
+        Map<String, Boolean> map = new ConcurrentHashMap<>();
+        Boolean aa = map.get("aa");
+        Boolean aa1 = map.put("aa", true);
+        System.out.println(aa);
+        System.out.println(aa1);
     }
 }

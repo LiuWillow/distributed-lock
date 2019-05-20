@@ -1,10 +1,14 @@
 package com.lwl.distributed.jdk;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -16,8 +20,9 @@ import java.util.concurrent.locks.ReentrantLock;
  **/
 public class LockClientHandler extends ChannelInboundHandlerAdapter {
     private ChannelHandlerContext context;
-    public static ThreadLocal<Condition> localCondition = new ThreadLocal<>();
-    public static ThreadLocal<String> localResult = new ThreadLocal<>();
+    private static Map<String, Condition> conditionMap = new ConcurrentHashMap<>();
+    private static Map<String, Lock> lockMap = new ConcurrentHashMap<>();
+    private static Map<String, String> resultMap = new ConcurrentHashMap<>();
     private static final String LOCK = "1";
     private static final String UN_LOCK = "0";
     private static final String SUCCESS = "1";
@@ -29,26 +34,37 @@ public class LockClientHandler extends ChannelInboundHandlerAdapter {
     }
 
     @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        if (msg == null) {
+    public void channelRead(ChannelHandlerContext ctx, Object object){
+        if (object == null) {
             return;
         }
-        String str = (String) msg;
-        localResult.set(str);
-        localCondition.get().signal();
+        String str = (String) object;
+        Msg msg = JSONObject.parseObject(str, Msg.class);
+        String requestId = msg.getRequestId();
+        resultMap.put(requestId, msg.getSuccess());
+        Lock lock = lockMap.get(requestId);
+        lock.lock();
+        Condition condition = conditionMap.get(requestId);
+        condition.signal();
+        lock.unlock();
     }
 
     public String send(Msg msg) {
         Lock lock = new ReentrantLock();
+        String requestId = msg.getRequestId();
+        lockMap.put(requestId, lock);
         Condition condition = lock.newCondition();
-        localCondition.set(condition);
+        conditionMap.put(requestId, condition);
         Channel channel = context.channel();
-        channel.writeAndFlush(JSON.toJSONString(msg));
+        channel.writeAndFlush(Unpooled.copiedBuffer((JSON.toJSONString(msg) + "$").getBytes()));
         try {
-            condition.await(4000, TimeUnit.MILLISECONDS);
+            lock.lock();
+            condition.await();
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            return FAILED;
+        } finally {
+            lock.unlock();
         }
-        return localResult.get();
+        return resultMap.get(requestId);
     }
 }
