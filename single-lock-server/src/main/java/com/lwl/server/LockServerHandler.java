@@ -19,8 +19,6 @@ import java.util.concurrent.locks.ReentrantLock;
  **/
 public class LockServerHandler extends ChannelInboundHandlerAdapter {
     private static final Map<String, Boolean> lockMap = new ConcurrentHashMap<>();
-    private static final int RETRY_TIMES = 3;
-    private static final long RETRY_TIME_OUT = 500;
     private static final String LOCK = "1";
     private static final String UN_LOCK = "0";
     private static final String SUCCESS = "1";
@@ -67,17 +65,6 @@ public class LockServerHandler extends ChannelInboundHandlerAdapter {
             return success;
         }
 
-//        for (int i = 0; i < RETRY_TIMES && !success; i++) {
-//            Thread.sleep(RETRY_TIME_OUT);
-//            success = tryLock(key);
-//        }
-
-        if (success) {
-            msg.setSuccess(SUCCESS);
-            channel.writeAndFlush(Unpooled.copiedBuffer((JSON.toJSONString(msg) + "$").getBytes()));
-            return success;
-        }
-
         msg.setSuccess(FAILED);
         channel.writeAndFlush(Unpooled.copiedBuffer((JSON.toJSONString(msg) + "$").getBytes()));
         return false;
@@ -92,13 +79,5 @@ public class LockServerHandler extends ChannelInboundHandlerAdapter {
             }
         }
         return false;
-    }
-
-    public static void main(String[] args) {
-        Map<String, Boolean> map = new ConcurrentHashMap<>();
-        Boolean aa = map.get("aa");
-        Boolean aa1 = map.put("aa", true);
-        System.out.println(aa);
-        System.out.println(aa1);
     }
 }
