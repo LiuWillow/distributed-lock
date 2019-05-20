@@ -77,7 +77,6 @@ public class LockTest {
                 }
             }).start();
         }
-
         Thread.sleep(40000);
     }
 

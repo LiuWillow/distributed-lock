@@ -23,7 +23,7 @@ import javax.annotation.PostConstruct;
  * @date 2019/5/17 13:51
  * 基于netty实现的分布式锁客户端
  */
-//@Service("jdkLock")
+@Service("jdkLock")
 public class Lock_2_SingleLock implements IDistributedLock {
     private static final String LOCK = "1";
     private static final String UN_LOCK = "0";
