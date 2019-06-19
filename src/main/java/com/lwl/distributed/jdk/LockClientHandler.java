@@ -34,7 +34,7 @@ public class LockClientHandler extends ChannelInboundHandlerAdapter {
     }
 
     @Override
-    public void channelRead(ChannelHandlerContext ctx, Object object){
+    public void channelRead(ChannelHandlerContext ctx, Object object) {
         if (object == null) {
             return;
         }
@@ -43,10 +43,15 @@ public class LockClientHandler extends ChannelInboundHandlerAdapter {
         String requestId = msg.getRequestId();
         resultMap.put(requestId, msg.getSuccess());
         Lock lock = lockMap.get(requestId);
-        lock.lock();
-        Condition condition = conditionMap.get(requestId);
-        condition.signal();
-        lock.unlock();
+        try {
+            lock.lock();
+            Condition condition = conditionMap.get(requestId);
+            condition.signal();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            lock.unlock();
+        }
     }
 
     public String send(Msg msg) {

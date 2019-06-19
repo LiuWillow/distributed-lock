@@ -25,6 +25,9 @@ public class Lock_3_SetNxPx extends BaseRedisLock {
         Boolean success = connection.set(key.getBytes(), value.getBytes(),
                 Expiration.milliseconds(EXPIRE),
                 RedisStringCommands.SetOption.ifAbsent());
+        if (!connection.isClosed()){
+            connection.close();
+        }
         return success == null ? false : success;
     }
 }
