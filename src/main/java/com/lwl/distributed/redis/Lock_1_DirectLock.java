@@ -2,6 +2,8 @@ package com.lwl.distributed.redis;
 
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 /**
  * @author liuweilong
  * @description
@@ -14,6 +16,6 @@ public class Lock_1_DirectLock extends BaseRedisLock {
      */
     @Override
     public boolean lock(String key, String value) {
-        return redisTemplate.opsForValue().setIfAbsent(key, value);
+        return Optional.ofNullable(redisTemplate.opsForValue().setIfAbsent(key, value)).orElse(false);
     }
 }

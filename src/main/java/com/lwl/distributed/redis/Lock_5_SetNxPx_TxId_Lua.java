@@ -64,7 +64,7 @@ public class Lock_5_SetNxPx_TxId_Lua extends BaseRedisLock {
         DefaultRedisScript<Long> redisScript = new DefaultRedisScript<>();
         redisScript.setScriptText(casScript);
         redisScript.setResultType(Long.class);
-        Object o = redisTemplate.execute(redisScript, Collections.singletonList(key),
+        Long result = redisTemplate.execute(redisScript, Collections.singletonList(key),
                 txId);
         //也可以用connection
 //        Boolean execute = redisTemplate.execute((RedisConnection connection) -> connection.eval(
@@ -74,7 +74,6 @@ public class Lock_5_SetNxPx_TxId_Lua extends BaseRedisLock {
 //                key.getBytes(),
 //                txId.getBytes()
 //        ));
-        Long result = (Long) o;
         return SUCCESS.equals(result);
     }
 }

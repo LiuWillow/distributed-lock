@@ -5,6 +5,10 @@ import org.springframework.data.redis.connection.RedisStringCommands;
 import org.springframework.data.redis.core.types.Expiration;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+
 /**
  * @author liuweilong
  * @description
@@ -22,10 +26,12 @@ public class Lock_3_SetNxPx extends BaseRedisLock {
     @Override
     public boolean lock(String key, String value) {
         RedisConnection connection = getConnection();
-        Boolean success = connection.set(key.getBytes(), value.getBytes(),
+        Boolean success = retry(() -> connection.set(key.getBytes(), value.getBytes(),
                 Expiration.milliseconds(EXPIRE),
-                RedisStringCommands.SetOption.ifAbsent());
+                RedisStringCommands.SetOption.ifAbsent()));
         releaseConnection(connection);
-        return success == null ? false : success;
+        //spring boot 2.1以上可以直接用
+//        redisTemplate.opsForValue().setIfAbsent(key, value, Duration.ofMillis(EXPIRE));
+        return Optional.ofNullable(success).orElse(false);
     }
 }

@@ -7,6 +7,9 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.types.Expiration;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
+import java.util.Optional;
+
 /**
  * @author liuweilong
  * @description
@@ -24,12 +27,7 @@ public class Lock_4_SetNxPx_TxId extends BaseRedisLock {
      */
     @Override
     public boolean lock(String key, String txId) {
-        RedisConnection connection = getConnection();
-        Boolean success = connection.set(key.getBytes(), txId.getBytes(),
-                Expiration.milliseconds(EXPIRE),
-                RedisStringCommands.SetOption.ifAbsent());
-        releaseConnection(connection);
-        return success == null ? false : success;
+        return retry(() -> redisTemplate.opsForValue().setIfAbsent(key, txId, Duration.ofMillis(EXPIRE)));
     }
 
     /**
@@ -43,7 +41,6 @@ public class Lock_4_SetNxPx_TxId extends BaseRedisLock {
             //txId不同，表示不是同一个事务
             return false;
         }
-        Boolean success = redisTemplate.delete(key);
-        return success == null ? false : success;
+        return Optional.ofNullable(redisTemplate.delete(key)).orElse(false);
     }
 }

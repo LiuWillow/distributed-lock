@@ -8,6 +8,7 @@ import org.springframework.data.redis.core.RedisConnectionUtils;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
 import java.util.function.Supplier;
 
 /**
@@ -38,12 +39,11 @@ public abstract class BaseRedisLock implements IDistributedLock {
 
     protected Boolean retry(Supplier<Boolean> task) {
         int retryTimes = 0;
-        Boolean success = false;
         while (true) {
             if (retryTimes++ > MAX_RETRY_TIMES) {
-                return success;
+                return false;
             }
-            success = task.get();
+            boolean success = task.get();
             if (success) {
                 return true;
             }
@@ -55,6 +55,6 @@ public abstract class BaseRedisLock implements IDistributedLock {
      */
     @Override
     public boolean unlock(String key, String value) {
-        return redisTemplate.delete(key);
+        return Optional.ofNullable(redisTemplate.delete(key)).orElse(false);
     }
 }
