@@ -1,4 +1,4 @@
-package com.lwl.distributed;
+package com.lwl.distributed.lock;
 
 /**
  * date  2019/5/19

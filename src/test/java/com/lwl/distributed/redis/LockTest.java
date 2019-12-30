@@ -1,7 +1,7 @@
 package com.lwl.distributed.redis;
 
 
-import com.lwl.distributed.IDistributedLock;
+import com.lwl.distributed.lock.IDistributedLock;
 import com.lwl.distributed.LockApp;
 import com.lwl.distributed.factory.LockType;
 import com.lwl.distributed.test.SimpleTestThread;

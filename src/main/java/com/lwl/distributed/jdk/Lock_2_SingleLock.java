@@ -1,7 +1,7 @@
 package com.lwl.distributed.jdk;
 
 
-import com.lwl.distributed.IDistributedLock;
+import com.lwl.distributed.lock.IDistributedLock;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;

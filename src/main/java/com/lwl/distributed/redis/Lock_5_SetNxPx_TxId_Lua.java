@@ -6,6 +6,7 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisStringCommands;
 import org.springframework.data.redis.connection.ReturnType;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.data.redis.core.types.Expiration;
 import org.springframework.data.redis.serializer.RedisSerializer;
@@ -13,6 +14,9 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author liuweilong
@@ -30,22 +34,27 @@ public class Lock_5_SetNxPx_TxId_Lua extends BaseRedisLock {
 
     /**
      * 调用set  传入nx和px参数，值为可以唯一标识当前线程的值
+     *
      * @param key
      * @return
      */
     @Override
     public boolean lock(String key, String txId) {
-        //TODO 要循环几次
-        RedisConnection connection = getConnection();
-        Boolean success = connection.set(key.getBytes(), txId.getBytes(),
-                Expiration.milliseconds(EXPIRE),
-                RedisStringCommands.SetOption.ifAbsent());
-        releaseConnection(connection);
-        return success == null ? false : success;
+        ValueOperations<String, String> valueOperations = redisTemplate.opsForValue();
+        String oldTxId = valueOperations.get(key);
+        //比较txId是否一致，实现可重入锁
+        if (Objects.nonNull(oldTxId) && oldTxId.equals(txId)) {
+            // 延时
+            redisTemplate.expire(key, EXPIRE, TimeUnit.MILLISECONDS);
+            return true;
+        }
+        //自带重试逻辑
+        return retry(() -> Optional.ofNullable(valueOperations.setIfAbsent(key, txId, EXPIRE, TimeUnit.MILLISECONDS)).orElse(false));
     }
 
     /**
      * 利用lua脚本比较
+     *
      * @param key
      * @return
      */

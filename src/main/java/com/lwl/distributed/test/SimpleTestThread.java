@@ -1,6 +1,6 @@
 package com.lwl.distributed.test;
 
-import com.lwl.distributed.IDistributedLock;
+import com.lwl.distributed.lock.IDistributedLock;
 import org.springframework.util.StringUtils;
 
 /**

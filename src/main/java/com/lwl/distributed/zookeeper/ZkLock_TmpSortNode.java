@@ -1,18 +1,14 @@
 package com.lwl.distributed.zookeeper;
 
-import com.lwl.distributed.IDistributedLock;
 import org.apache.zookeeper.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 
 /**
  * @author liuweilong

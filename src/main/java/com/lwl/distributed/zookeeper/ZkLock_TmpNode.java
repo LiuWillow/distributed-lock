@@ -1,6 +1,6 @@
 package com.lwl.distributed.zookeeper;
 
-import com.lwl.distributed.IDistributedLock;
+import com.lwl.distributed.lock.IDistributedLock;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooDefs;
 import org.apache.zookeeper.ZooKeeper;
