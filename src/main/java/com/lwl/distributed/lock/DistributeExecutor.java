@@ -23,7 +23,7 @@ public class DistributeExecutor {
      * 需要上锁的业务，调用该方法执行（或者用AOP的方式）
      * @param task 业务逻辑
      * @param key
-     * @param txId 事务id
+     * @param txId 事务id 如 productId + 时间戳
      * @param <T> 任务返回的结果类型
      */
     public <T> T exec(Supplier<T> task, String key, String txId) {
