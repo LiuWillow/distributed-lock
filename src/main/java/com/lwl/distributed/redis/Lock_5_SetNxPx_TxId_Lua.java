@@ -2,6 +2,7 @@ package com.lwl.distributed.redis;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.connection.RedisConnection;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisStringCommands;
 import org.springframework.data.redis.connection.ReturnType;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -35,10 +36,11 @@ public class Lock_5_SetNxPx_TxId_Lua extends BaseRedisLock {
     @Override
     public boolean lock(String key, String txId) {
         //TODO 要循环几次
-        RedisConnection connection = redisTemplate.getConnectionFactory().getConnection();
+        RedisConnection connection = getConnection();
         Boolean success = connection.set(key.getBytes(), txId.getBytes(),
                 Expiration.milliseconds(EXPIRE),
                 RedisStringCommands.SetOption.ifAbsent());
+        releaseConnection(connection);
         return success == null ? false : success;
     }
 

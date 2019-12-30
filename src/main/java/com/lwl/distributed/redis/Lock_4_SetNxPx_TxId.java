@@ -24,10 +24,11 @@ public class Lock_4_SetNxPx_TxId extends BaseRedisLock {
      */
     @Override
     public boolean lock(String key, String txId) {
-        RedisConnection connection = redisTemplate.getConnectionFactory().getConnection();
+        RedisConnection connection = getConnection();
         Boolean success = connection.set(key.getBytes(), txId.getBytes(),
                 Expiration.milliseconds(EXPIRE),
                 RedisStringCommands.SetOption.ifAbsent());
+        releaseConnection(connection);
         return success == null ? false : success;
     }
 

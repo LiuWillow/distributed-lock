@@ -21,13 +21,11 @@ public class Lock_3_SetNxPx extends BaseRedisLock {
      */
     @Override
     public boolean lock(String key, String value) {
-        RedisConnection connection = redisTemplate.getConnectionFactory().getConnection();
+        RedisConnection connection = getConnection();
         Boolean success = connection.set(key.getBytes(), value.getBytes(),
                 Expiration.milliseconds(EXPIRE),
                 RedisStringCommands.SetOption.ifAbsent());
-        if (!connection.isClosed()){
-            connection.close();
-        }
+        releaseConnection(connection);
         return success == null ? false : success;
     }
 }
