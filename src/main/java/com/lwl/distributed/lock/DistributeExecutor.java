@@ -24,6 +24,7 @@ public class DistributeExecutor {
      * @param task 业务逻辑
      * @param key
      * @param txId 事务id
+     * @param <T> 任务返回的结果类型
      */
     public <T> T exec(Supplier<T> task, String key, String txId) {
         T result;
