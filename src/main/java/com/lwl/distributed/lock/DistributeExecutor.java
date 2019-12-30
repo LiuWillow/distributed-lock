@@ -20,7 +20,7 @@ public class DistributeExecutor {
     private IDistributedLock distributedLock;
 
     /**
-     * 需要上锁的业务，调用该方法执行（或者用AOP的方式）
+     * 需要上锁的业务，调用该方法执行（或者用AOP的方式{@link DistributeAspect}, {@link DistributedLock}）
      * @param task 业务逻辑
      * @param key
      * @param txId 事务id 如 productId + 时间戳
