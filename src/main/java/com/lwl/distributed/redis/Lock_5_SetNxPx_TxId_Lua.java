@@ -1,5 +1,6 @@
 package com.lwl.distributed.redis;
 
+import com.google.common.collect.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -64,7 +65,7 @@ public class Lock_5_SetNxPx_TxId_Lua extends BaseRedisLock {
         DefaultRedisScript<Long> redisScript = new DefaultRedisScript<>();
         redisScript.setScriptText(casScript);
         redisScript.setResultType(Long.class);
-        Long result = redisTemplate.execute(redisScript, Collections.singletonList(key),
+        Long result = redisTemplate.execute(redisScript, Lists.newArrayList(key),
                 txId);
         //也可以用connection
 //        Boolean execute = redisTemplate.execute((RedisConnection connection) -> connection.eval(
