@@ -1,4 +1,4 @@
-package com.lwl.client.redis;
+package com.lwl.lock;
 
 
 import com.lwl.client.lock.IDistributedLock;
