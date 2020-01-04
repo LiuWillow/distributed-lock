@@ -1,4 +1,4 @@
-package com.lwl.server;
+package com.lwl.client.jdk;
 
 import lombok.Data;
 
@@ -6,14 +6,13 @@ import lombok.Data;
  * date  2019/5/19
  * author liuwillow
  **/
-@Data
 public class Msg {
     /**
      * 请求的唯一标志，测试时用线程名称
      */
     private String requestId;
     /**
-     * 请求类型，1加锁，0解锁
+     * 请求类型，1加锁，2解锁
      */
     private String type;
     /**
@@ -24,6 +23,21 @@ public class Msg {
      * 操作是否成功，用于服务端响应
      */
     private String success;
+    public String getKey() {
+        return key;
+    }
+
+    public void setKey(String key) {
+        this.key = key;
+    }
+
+    public String getSuccess() {
+        return success;
+    }
+
+    public void setSuccess(String success) {
+        this.success = success;
+    }
 
     public String getRequestId() {
         return requestId;
@@ -39,21 +53,5 @@ public class Msg {
 
     public void setType(String type) {
         this.type = type;
-    }
-
-    public String getSuccess() {
-        return success;
-    }
-
-    public void setSuccess(String success) {
-        this.success = success;
-    }
-
-    public String getKey() {
-        return key;
-    }
-
-    public void setKey(String key) {
-        this.key = key;
     }
 }
