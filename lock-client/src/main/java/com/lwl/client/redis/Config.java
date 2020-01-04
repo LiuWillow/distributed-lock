@@ -1,5 +1,6 @@
 package com.lwl.client.redis;
 
+import lombok.extern.slf4j.Slf4j;
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.SingleServerConfig;
@@ -20,6 +21,7 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
  * @date 2019/5/17 9:09
  */
 @Configuration
+@Slf4j
 public class Config {
     @Autowired
     private RedisTemplate redisTemplate;
@@ -44,6 +46,7 @@ public class Config {
     @Bean
     @ConditionalOnMissingBean(RedisTemplate.class)
     public RedissonClient redissonClient(){
+        log.info("----正在初始化redissonClient---");
         org.redisson.config.Config config = new org.redisson.config.Config();
         SingleServerConfig singleServerConfig = config.useSingleServer();
         singleServerConfig.setClientName("clientName");

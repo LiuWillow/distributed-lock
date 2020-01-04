@@ -20,6 +20,7 @@ import io.netty.handler.codec.string.StringEncoder;
 public class DistributedLockServer {
     private static int PORT = 9821;
     public static void main(String[] args) {
+        System.out.println("--------初始化netty-------");
         ServerBootstrap bootstrap = new ServerBootstrap();
         NioEventLoopGroup boss = new NioEventLoopGroup();
         NioEventLoopGroup worker = new NioEventLoopGroup();

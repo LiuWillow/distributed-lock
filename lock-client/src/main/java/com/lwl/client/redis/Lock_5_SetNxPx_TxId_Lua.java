@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit;
 @Service("redisNxPxTxLua")
 @Slf4j
 public class Lock_5_SetNxPx_TxId_Lua extends BaseRedisLock {
-    private static  NamedThreadLocal<Optional<Integer>> STATE = new NamedThreadLocal<>("redis_distribute_lock_state");
+    private static NamedThreadLocal<Integer> STATE = new NamedThreadLocal<>("redis_distribute_lock_state");
 
     @Autowired
     public StringRedisTemplate redisTemplate;
@@ -70,6 +70,7 @@ public class Lock_5_SetNxPx_TxId_Lua extends BaseRedisLock {
 
     /**
      * 可重入锁
+     *
      * @param key
      * @param txId
      * @return
@@ -81,6 +82,7 @@ public class Lock_5_SetNxPx_TxId_Lua extends BaseRedisLock {
                 if (state != 0) {
                     // 不为0，说明已经拿到过锁了，直接加1然后延时
                     incrStateAndExpire(key, expire, timeUnit);
+                    log.info("分布式锁重入并延时成功, key:{}, txId:{}", key, txId);
                     return true;
                 }
             }
@@ -94,7 +96,8 @@ public class Lock_5_SetNxPx_TxId_Lua extends BaseRedisLock {
                 return true;
             }
             //获取失败，进入重试
-            success = retry(() -> setNxPx(key, txId, expire, timeUnit), maxRetryTimes, expire, timeUnit);
+            success = retry(() -> setNxPx(key, txId, expire, timeUnit),
+                    maxRetryTimes);
             if (success) {
                 incrStateAndExpire(key, expire, timeUnit);
             }
@@ -106,13 +109,13 @@ public class Lock_5_SetNxPx_TxId_Lua extends BaseRedisLock {
     }
 
     private void incrStateAndExpire(String key, long expire, TimeUnit timeUnit) {
-        Integer state = STATE.get().orElse(0);
-        STATE.set(Optional.of(state + 1));
+        Integer state = getState();
+        STATE.set(state + 1);
         redisTemplate.expire(key, expire, timeUnit);
     }
 
     private Integer getState() {
-        return STATE.get().orElse(0);
+        return Optional.ofNullable(STATE.get()).orElse(0);
     }
 
     private boolean setNxPx(String key, String txId, long expire, TimeUnit timeUnit) {
@@ -133,11 +136,5 @@ public class Lock_5_SetNxPx_TxId_Lua extends BaseRedisLock {
         if (state == 0) {
             STATE.remove();
         }
-    }
-
-    @Data
-    private static class StateHolder{
-        private String keyAndValue;
-        private int state;
     }
 }

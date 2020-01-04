@@ -40,7 +40,7 @@ public abstract class BaseRedisLock implements IDistributedLock {
         RedisConnectionUtils.releaseConnection(redisConnection, getConnectionFactory());
     }
 
-    protected Boolean retry(Supplier<Boolean> task, int maxRetryTimes, long waitTime, TimeUnit timeUnit) {
+    protected Boolean retry(Supplier<Boolean> task, int maxRetryTimes) {
         int retryTimes = 0;
         while (true) {
             if (retryTimes++ > maxRetryTimes) {
@@ -51,7 +51,7 @@ public abstract class BaseRedisLock implements IDistributedLock {
                 return true;
             }
             try {
-                timeUnit.sleep(waitTime);
+                DEFAULT_WAITE_TIME_UNIT.sleep(DEFAULT_WAIT_TIME);
             } catch (InterruptedException e) {
                 log.error("分布式锁重试，线程interrupted异常", e);
                 Thread.currentThread().interrupt();
@@ -60,7 +60,7 @@ public abstract class BaseRedisLock implements IDistributedLock {
     }
 
     protected Boolean retry(Supplier<Boolean> task) {
-        return retry(task, DEFAULT_MAX_RETRY_TIMES, DEFAULT_WAIT_TIME, DEFAULT_WAITE_TIME_UNIT);
+        return retry(task, DEFAULT_MAX_RETRY_TIMES);
     }
 
     /**
