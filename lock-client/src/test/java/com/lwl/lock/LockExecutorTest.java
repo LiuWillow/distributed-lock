@@ -36,6 +36,8 @@ public class LockExecutorTest {
 
                 return null;
             }, "lwl_key", "lwl_txId", 20, TimeUnit.SECONDS)).start();
+
+            TimeUnit.MILLISECONDS.sleep(200);
         }
 
         TimeUnit.SECONDS.sleep(100);

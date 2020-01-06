@@ -41,10 +41,10 @@ public class DistributeExecutor {
             //上锁
             boolean success = distributedLock.reentrantLock(key, txId, expire, timeUnit, retryTimes, reenter);
             if (!success) {
-                log.error("分布式锁上锁失败, key:{}, txId:{}", key, txId);
+                log.error("Thread-{}分布式锁上锁失败, key:{}, txId:{}", Thread.currentThread().getId(), key, txId);
                 return null;
             }
-            log.info("获取分布式锁成功，key为：{}, txId为{}", key, txId);
+            log.info("Thread-{}获取分布式锁成功，key为：{}, txId为{}", Thread.currentThread().getId(), key, txId);
             //执行任务
             result = task.get();
         } catch (Exception currentException) {
@@ -55,10 +55,10 @@ public class DistributeExecutor {
             unLockSuccess = distributedLock.reentrantUnLock(key, txId);
         }
         if (!unLockSuccess) {
-            log.error("分布式锁解锁失败，key:{}, txId:{}", key, txId);
+            log.error("Thread-{}分布式锁解锁失败，key:{}, txId:{}", Thread.currentThread().getId(), key, txId);
             return null;
         }
-        log.info("分布式锁解锁成功, key:{}, txId:{}", key, txId);
+        log.info("Thread-{}分布式锁解锁成功, key:{}, txId:{}", Thread.currentThread().getId(), key, txId);
         return result;
     }
 

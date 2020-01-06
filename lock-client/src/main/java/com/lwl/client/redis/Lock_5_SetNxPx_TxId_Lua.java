@@ -82,7 +82,7 @@ public class Lock_5_SetNxPx_TxId_Lua extends BaseRedisLock {
                 if (state != 0) {
                     // 不为0，说明已经拿到过锁了，直接加1然后延时
                     incrStateAndExpire(key, expire, timeUnit);
-                    log.info("分布式锁重入并延时成功, key:{}, txId:{}", key, txId);
+                    log.info("Thread-{}分布式锁重入并延时成功, key:{}, txId:{}", Thread.currentThread().getId(), key, txId);
                     return true;
                 }
             }
