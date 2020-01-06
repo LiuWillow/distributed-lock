@@ -1,7 +1,6 @@
 package com.lwl.client.redis;
 
 import com.google.common.collect.Lists;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.NamedThreadLocal;
@@ -21,12 +20,26 @@ import java.util.concurrent.TimeUnit;
 @Service("redisNxPxTxLua")
 @Slf4j
 public class Lock_5_SetNxPx_TxId_Lua extends BaseRedisLock {
-    private static NamedThreadLocal<Integer> STATE = new NamedThreadLocal<>("redis_distribute_lock_state");
+    private static NamedThreadLocal<Integer> CURRENT_STATE = new NamedThreadLocal<>("redis_distribute_lock_state");
+    /**
+     * 锁的初始化状态
+     */
+    private static final Integer STATE_INIT = 0;
 
     @Autowired
     public StringRedisTemplate redisTemplate;
-    private static final String casScript = "if redis.call('get', KEYS[1]) == ARGV[1] " +
+    /**
+     * 删除脚本，如果key对应的值能匹配上，就删除key
+     */
+    private static final String CAS_DELETE_SCRIPT = "if redis.call('get', KEYS[1]) == ARGV[1] " +
             "then return redis.call('del', KEYS[1]) " +
+            "else return 0 end";
+
+    /**
+     * 锁延时脚本，如果txId一致则延时，否则延时失败
+     */
+    private static final String CAS_EXPIRE_SCRIPT = "if redis.call('get', KEYS[1]) == ARGV[1] " +
+            "then return redis.call('expire', KEYS[1], ARGV[2]) " +
             "else return 0 end";
     private static final Long SUCCESS = 1L;
 
@@ -44,20 +57,21 @@ public class Lock_5_SetNxPx_TxId_Lua extends BaseRedisLock {
     }
 
     /**
-     * 利用lua脚本比较
+     * 利用lua脚本比较并删除
      *
      * @param key
      * @return
      */
     @Override
     public boolean unlock(String key, String txId) {
-        //redisTemplate只能接受Long
-        DefaultRedisScript<Long> redisScript = new DefaultRedisScript<>();
-        redisScript.setScriptText(casScript);
-        redisScript.setResultType(Long.class);
-        Long result = redisTemplate.execute(redisScript, Lists.newArrayList(key),
-                txId);
-        //也可以用connection
+        try {
+            //redisTemplate只能接受Long
+            DefaultRedisScript<Long> redisScript = new DefaultRedisScript<>();
+            redisScript.setScriptText(CAS_DELETE_SCRIPT);
+            redisScript.setResultType(Long.class);
+            Long result = redisTemplate.execute(redisScript, Lists.newArrayList(key),
+                    txId);
+            //也可以用connection
 //        Boolean execute = redisTemplate.execute((RedisConnection connection) -> connection.eval(
 //                casScript.getBytes(),
 //                ReturnType.INTEGER,
@@ -65,7 +79,12 @@ public class Lock_5_SetNxPx_TxId_Lua extends BaseRedisLock {
 //                key.getBytes(),
 //                txId.getBytes()
 //        ));
-        return SUCCESS.equals(result);
+            return SUCCESS.equals(result);
+        } catch (Exception e) {
+            log.error("分布式锁解锁异常", e);
+            return false;
+        }
+
     }
 
     /**
@@ -79,11 +98,12 @@ public class Lock_5_SetNxPx_TxId_Lua extends BaseRedisLock {
         try {
             if (reenter) {
                 Integer state = getState();
-                if (state != 0) {
+                if (!STATE_INIT.equals(state)) {
                     // 不为0，说明已经拿到过锁了，直接加1然后延时
-                    incrStateAndExpire(key, expire, timeUnit);
-                    log.info("Thread-{}分布式锁重入并延时成功, key:{}, txId:{}", Thread.currentThread().getId(), key, txId);
-                    return true;
+                    boolean success = incrStateAndExpire(key, txId, expire, timeUnit);
+                    log.info("Thread-{}分布式锁重入并延时{}, key:{}, txId:{}", success ? "成功" : "失败",
+                            Thread.currentThread().getId(), key, txId);
+                    return success;
                 }
             }
 
@@ -91,15 +111,15 @@ public class Lock_5_SetNxPx_TxId_Lua extends BaseRedisLock {
             boolean success = setNxPx(key, txId, expire, timeUnit);
             if (success) {
                 if (reenter) {
-                    incrStateAndExpire(key, expire, timeUnit);
+                    incrState();
                 }
                 return true;
             }
             //获取失败，进入重试
             success = retry(() -> setNxPx(key, txId, expire, timeUnit),
                     maxRetryTimes);
-            if (success) {
-                incrStateAndExpire(key, expire, timeUnit);
+            if (success && reenter) {
+                incrState();
             }
             return success;
         } catch (Exception e) {
@@ -108,33 +128,81 @@ public class Lock_5_SetNxPx_TxId_Lua extends BaseRedisLock {
         }
     }
 
-    private void incrStateAndExpire(String key, long expire, TimeUnit timeUnit) {
+    private void incrState() {
         Integer state = getState();
-        STATE.set(state + 1);
-        redisTemplate.expire(key, expire, timeUnit);
+        CURRENT_STATE.set(++state);
     }
 
+    /**
+     * state自增并延时key
+     * @param key
+     * @param txId
+     * @param expire
+     * @param timeUnit
+     * @return
+     */
+    private boolean incrStateAndExpire(String key, String txId, long expire, TimeUnit timeUnit) {
+        incrState();
+        return casExpire(key, txId, expire, timeUnit);
+    }
+
+    /**
+     * 比较key对应的值是否与给定值一致，是则延时
+     * @param key
+     * @param txId
+     * @param expire
+     * @param timeUnit
+     * @return
+     */
+    private boolean casExpire(String key, String txId, long expire, TimeUnit timeUnit) {
+        DefaultRedisScript<Long> redisScript = new DefaultRedisScript<>();
+        redisScript.setScriptText(CAS_EXPIRE_SCRIPT);
+        redisScript.setResultType(Long.class);
+        //只能用秒，而且必须转换为字符串
+        long secondsExpire = TimeUnit.SECONDS.convert(expire, timeUnit);
+        Long result = redisTemplate.execute(redisScript, Lists.newArrayList(key),
+                txId, secondsExpire + "");
+        return SUCCESS.equals(result);
+    }
+
+    /**
+     * 获取state，如果为空则返回0
+     * @return
+     */
     private Integer getState() {
-        return Optional.ofNullable(STATE.get()).orElse(0);
+        return Optional.ofNullable(CURRENT_STATE.get()).orElse(STATE_INIT);
     }
 
     private boolean setNxPx(String key, String txId, long expire, TimeUnit timeUnit) {
         return Optional.ofNullable(redisTemplate.opsForValue().setIfAbsent(key, txId, expire, timeUnit)).orElse(false);
     }
 
+    /**
+     * 分布式锁解锁
+     * @param key
+     * @param txId
+     * @return
+     */
     public boolean reentrantUnLock(String key, String txId) {
-        decrState();
-        Integer state = getState();
-        if (state == 0) {
+        Integer state = decrState();
+        if (STATE_INIT.equals(state)) {
             return unlock(key, txId);
         }
         return true;
     }
 
-    private void decrState() {
+    /**
+     * state减一
+     * @return 自减后的state
+     */
+    private Integer decrState() {
         Integer state = getState();
-        if (state == 0) {
-            STATE.remove();
+        if (STATE_INIT.equals(state)) {
+            //如果减了之后是0，则手动删除该线程的threadLocal
+            CURRENT_STATE.remove();
+            return state;
         }
+        CURRENT_STATE.set(--state);
+        return state;
     }
 }
