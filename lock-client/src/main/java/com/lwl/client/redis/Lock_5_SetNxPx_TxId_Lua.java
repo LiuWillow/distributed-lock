@@ -101,8 +101,7 @@ public class Lock_5_SetNxPx_TxId_Lua extends BaseRedisLock {
                 if (!STATE_INIT.equals(state)) {
                     // 不为0，说明已经拿到过锁了，直接加1然后延时
                     boolean success = incrStateAndExpire(key, txId, expire, timeUnit);
-                    log.info("Thread-{}分布式锁重入并延时{}, key:{}, txId:{}", success ? "成功" : "失败",
-                            Thread.currentThread().getId(), key, txId);
+                    log.info("Thread-{}分布式锁重入并延时{}, key:{}, txId:{}", Thread.currentThread().getId(), success ? "成功" : "失败", key, txId);
                     return success;
                 }
             }
@@ -113,6 +112,7 @@ public class Lock_5_SetNxPx_TxId_Lua extends BaseRedisLock {
                 if (reenter) {
                     incrState();
                 }
+                log.info("Thread-{}分布式锁上锁成功, key:{}, txId:{}", Thread.currentThread().getId(), key, txId);
                 return true;
             }
             //获取失败，进入重试
@@ -121,6 +121,7 @@ public class Lock_5_SetNxPx_TxId_Lua extends BaseRedisLock {
             if (success && reenter) {
                 incrState();
             }
+            log.info("Thread-{}分布式锁上锁{}, key:{}, txId:{}", Thread.currentThread().getId(), success ? "成功" : "失败", key, txId);
             return success;
         } catch (Exception e) {
             log.error("redis分布式锁未知异常", e);
@@ -186,8 +187,11 @@ public class Lock_5_SetNxPx_TxId_Lua extends BaseRedisLock {
     public boolean reentrantUnLock(String key, String txId) {
         Integer state = decrState();
         if (STATE_INIT.equals(state)) {
-            return unlock(key, txId);
+            boolean success = unlock(key, txId);
+            log.info("Thread-{}分布式锁解锁{}，key:{}, txId:{}", Thread.currentThread().getId(), success ? "成功" : "失败",  key, txId);
+            return success;
         }
+        log.info("Thread-{}分布式锁，解锁（本地锁）成功，key:{}, txId:{}", Thread.currentThread().getId(), key, txId);
         return true;
     }
 

@@ -25,19 +25,19 @@ public class LockExecutorTest {
 
     @Test
     public void test_exec_reenter() throws InterruptedException {
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 200; i++) {
             new Thread(() -> distributeExecutor.execReenter(() -> {
                 log.info("Tread-{}执行第一段程序", Thread.currentThread().getId());
 
                 distributeExecutor.execReenter(() -> {
                     log.info("Tread-{}执行第二段程序", Thread.currentThread().getId());
                     return null;
-                }, "lwl_key", "lwl_txId", 20, TimeUnit.SECONDS);
+                }, "lwl_key", "lwl_txId" + Thread.currentThread().getId(), 20, TimeUnit.SECONDS);
 
                 return null;
-            }, "lwl_key", "lwl_txId", 20, TimeUnit.SECONDS)).start();
+            }, "lwl_key", "lwl_txId" + Thread.currentThread().getId(), 20, TimeUnit.SECONDS)).start();
 
-            TimeUnit.MILLISECONDS.sleep(200);
+            TimeUnit.MILLISECONDS.sleep(150);
         }
 
         TimeUnit.SECONDS.sleep(100);

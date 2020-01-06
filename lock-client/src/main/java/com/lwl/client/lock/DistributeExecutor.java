@@ -3,10 +3,8 @@ package com.lwl.client.lock;
 import com.lwl.client.redis.Lock_5_SetNxPx_TxId_Lua;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
@@ -30,21 +28,19 @@ public class DistributeExecutor {
      * @param task       任务
      * @param key        分布式key
      * @param txId       分布式事务id
-     * @param expire   锁过期时间
+     * @param expire     锁过期时间
      * @param timeUnit   等待时间对应的时间单位
      * @param retryTimes 重试次数
      */
-    private  <T> T exec(Supplier<T> task, String key, String txId, long expire, TimeUnit timeUnit, int retryTimes, boolean reenter) {
-        boolean unLockSuccess;
+    private <T> T exec(Supplier<T> task, String key, String txId, long expire, TimeUnit timeUnit, int retryTimes, boolean reenter) {
         T result;
+        boolean lockSuccess = false;
         try {
             //上锁
-            boolean success = distributedLock.reentrantLock(key, txId, expire, timeUnit, retryTimes, reenter);
-            if (!success) {
-                log.error("Thread-{}分布式锁上锁失败, key:{}, txId:{}", Thread.currentThread().getId(), key, txId);
+            lockSuccess = distributedLock.reentrantLock(key, txId, expire, timeUnit, retryTimes, reenter);
+            if (!lockSuccess) {
                 return null;
             }
-            log.info("Thread-{}获取分布式锁成功，key为：{}, txId为{}", Thread.currentThread().getId(), key, txId);
             //执行任务
             result = task.get();
         } catch (Exception currentException) {
@@ -52,13 +48,10 @@ public class DistributeExecutor {
             return null;
         } finally {
             //解锁
-            unLockSuccess = distributedLock.reentrantUnLock(key, txId);
+            if (lockSuccess) {
+                distributedLock.reentrantUnLock(key, txId);
+            }
         }
-        if (!unLockSuccess) {
-            log.error("Thread-{}分布式锁解锁失败，key:{}, txId:{}", Thread.currentThread().getId(), key, txId);
-            return null;
-        }
-        log.info("Thread-{}分布式锁解锁成功, key:{}, txId:{}", Thread.currentThread().getId(), key, txId);
         return result;
     }
 
@@ -66,7 +59,7 @@ public class DistributeExecutor {
      * 执行分布式锁任务，等待时间用默认值
      *
      * @param task 任务逻辑
-     * @param key 键
+     * @param key  键
      * @param txId 值，事务id，如文档锁，可以用文档id + 时间戳 + 随机数
      */
     public <T> T exec(Supplier<T> task, String key, String txId) {
@@ -77,10 +70,10 @@ public class DistributeExecutor {
     /**
      * 执行分布式锁任务
      *
-     * @param task 任务逻辑
-     * @param key 键
-     * @param txId 值，事务id，如文档锁，可以用文档id + 时间戳 + 随机数
-     * @param expire 超时时间
+     * @param task     任务逻辑
+     * @param key      键
+     * @param txId     值，事务id，如文档锁，可以用文档id + 时间戳 + 随机数
+     * @param expire   超时时间
      * @param timeUnit 单位
      */
     public <T> T exec(Supplier<T> task, String key, String txId, long expire, TimeUnit timeUnit) {
@@ -90,10 +83,11 @@ public class DistributeExecutor {
 
     /**
      * 执行分布式锁任务，可重入
-     * @param task 任务逻辑
-     * @param key 键
-     * @param txId 值，事务id，如文档锁，可以用文档id + 时间戳 + 随机数
-     * @param expire 超时时间
+     *
+     * @param task     任务逻辑
+     * @param key      键
+     * @param txId     值，事务id，如文档锁，可以用文档id + 时间戳 + 随机数
+     * @param expire   超时时间
      * @param timeUnit 单位
      */
     public <T> T execReenter(Supplier<T> task, String key, String txId, long expire, TimeUnit timeUnit) {
@@ -103,8 +97,9 @@ public class DistributeExecutor {
 
     /**
      * 执行分布式锁任务，等待时间用默认值，可重入
+     *
      * @param task 任务逻辑
-     * @param key 键
+     * @param key  键
      * @param txId 值，事务id，如文档锁，可以用文档id + 时间戳 + 随机数
      */
     public <T> T execReenter(Supplier<T> task, String key, String txId) {
